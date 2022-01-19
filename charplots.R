@@ -18,23 +18,22 @@ provabbrev <- chardata %>% filter(grepl('2016A0002', DGUID), `Donors and donatio
 
 totdon<-chardata %>% filter(grepl('2016A0002', DGUID), `Donors and donations` == "Total charitable donations") %>% left_join(x=.,y=provabbrev, by="DGUID") %>% left_join(x=.,y=cpidata, by=c("REF_DATE", "DGUID")) %>% mutate(realdon = val_norm*(100/cpi)) %>% left_join(x=., y=incdata, by = c("REF_DATE", "DGUID")) %>% mutate(dpinc = realdon/realinc)
 totdon<- totdon %>% filter(REF_DATE==1997) %>% select(pr, dpinc ) %>% rename(dpinc97=dpinc) %>% left_join(x=totdon,y=., by="pr") %>% mutate(dpincindex = 100*dpinc/dpinc97) 
-meddon<-chardata %>% filter(grepl('2016A0002', DGUID), `Donors and donations` == "Median donations") %>% left_join(x=.,y=provabbrev, by="DGUID") %>% left_join(x=.,y=cpidata, by="REF_DATE") %>% mutate(realdon = val_norm*(100/cpi)) 
+meddon<-chardata %>% filter(grepl('2016A0002', DGUID), `Donors and donations` == "Median donations") %>% left_join(x=.,y=provabbrev, by="DGUID") %>% left_join(x=.,y=cpidata, by=c("REF_DATE", "DGUID"))%>% mutate(realdon = val_norm*(100/cpi)) 
 
 
-baseplot<-ggplot(meddon, aes(REF_DATE,realdon, group=GEO, color=GEO))
-
-baseplot + 
+ggplot(meddon, aes(REF_DATE,realdon, group=GEO, color=GEO)) + 
   geom_line(size = 1.3, alpha = 0.8 ) + 
   theme_minimal() + 
   theme(legend.position="none") +
   scale_x_discrete(breaks = scales::pretty_breaks(n = 10), expand = expansion(add=c(0,4)))+
-   geom_text_repel(data=filter(totdon,REF_DATE==2019),aes(label = pr),nudge_x = 2, direction = "y", hjust = "left") 
+   geom_text_repel(data=filter(meddon,REF_DATE==2019),aes(label = pr),nudge_x = 2, direction = "y", hjust = "left") +
+ylab("Dollars (2019=100)") + 
+  xlab("Year") + 
+  ggtitle("Median Real Donations Over Time in Canada") 
 
+ggsave("plots/meddn.png", plot=last_plot(),width=8,height=4.5,dpi=200)
 
-
-baseplot2<-ggplot(totdon, aes(REF_DATE,dpincindex, group=GEO, color=GEO))
-
-baseplot2 + 
+ggplot(totdon, aes(REF_DATE,dpincindex, group=GEO, color=GEO)) +
   geom_hline(yintercept=100, linetype="dashed", color = "black") +
   geom_line(size = 1.3, alpha = 0.8 ) + 
   theme_minimal() + 
@@ -45,6 +44,7 @@ baseplot2 +
   xlab("Year") + 
   ggtitle("Donations Relative to Income Over Time Indexed to 1997") 
   
+ggsave("plots/totdn_index.png", plot=last_plot(),width=8,height=4.5,dpi=200)
 
 
   
